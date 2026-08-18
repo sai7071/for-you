@@ -1,4 +1,4 @@
-
+<!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="UTF-8">
@@ -404,6 +404,28 @@ button{font-family:inherit;cursor:pointer;}
   line-height:1.6;
 }
 
+.toast{
+  position:absolute;
+  bottom:50px;
+  left:50%;
+  transform:translateX(-50%);
+  background:rgba(18,20,43,.9);
+  border:1px solid var(--gold-dim);
+  color:var(--parchment);
+  padding:.6rem 1.2rem;
+  border-radius:8px;
+  font-family:'Space Mono', monospace;
+  font-size:.7rem;
+  letter-spacing:.04em;
+  text-align:center;
+  white-space:nowrap;
+  opacity:0;
+  pointer-events:none;
+  transition:opacity .35s var(--ease), transform .35s var(--ease);
+  z-index:3;
+}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(-4px);}
+
 @media (max-width:560px){
   .topnav{gap:1.6rem;}
   .code-box{width:44px;height:56px;font-size:1.3rem;}
@@ -480,6 +502,7 @@ button{font-family:inherit;cursor:pointer;}
       <button class="nav-arrow next" id="nextBtn" aria-label="next">›</button>
       <div class="stamp" id="stamp"></div>
       <div class="sprockets" id="sprockets"></div>
+      <div class="toast" id="toast">please close the tab after you're done</div>
     </div>
   </main>
 </section>
@@ -518,6 +541,7 @@ function showView(name){
   navSong.classList.toggle('active', toSong);
   navGallery.classList.toggle('active', !toSong);
   if(!toSong) audioEl.pause();
+  else resetGalleryLock();
 }
 navSong.addEventListener('click', () => showView('song'));
 navGallery.addEventListener('click', () => showView('gallery'));
@@ -574,6 +598,16 @@ const boxesWrap = document.getElementById('codeBoxes');
 const boxes = Array.from(document.querySelectorAll('.code-box'));
 const lockError = document.getElementById('lockError');
 
+function resetGalleryLock(){
+  clearInterval(timer);
+  lockStage.hidden = false;
+  lockStage.classList.remove('leaving');
+  galleryStage.hidden = true;
+  lockError.classList.remove('show');
+  boxes.forEach(b => b.value = '');
+  boxes[0].focus();
+}
+
 function checkCode(){
   const entered = boxes.map(b => b.value).join('');
   if(entered.length < 4) return;
@@ -613,6 +647,14 @@ const sprocketsEl = document.getElementById('sprockets');
 const stampEl = document.getElementById('stamp');
 const prevBtn = document.getElementById('prevBtn');
 const nextBtn = document.getElementById('nextBtn');
+const toast = document.getElementById('toast');
+let toastTimer = null;
+
+function flashToast(){
+  toast.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => toast.classList.remove('show'), 2500);
+}
 
 let current = 0;
 let timer = null;
@@ -671,8 +713,8 @@ function restartTimer(){
   timer = setInterval(() => showSlide(current + 1), 5000);
 }
 
-nextBtn.addEventListener('click', () => { showSlide(current+1); restartTimer(); });
-prevBtn.addEventListener('click', () => { showSlide(current-1); restartTimer(); });
+nextBtn.addEventListener('click', () => { showSlide(current+1); restartTimer(); flashToast(); });
+prevBtn.addEventListener('click', () => { showSlide(current-1); restartTimer(); flashToast(); });
 slideshow.addEventListener('mouseenter', () => clearInterval(timer));
 slideshow.addEventListener('mouseleave', () => restartTimer());
 
